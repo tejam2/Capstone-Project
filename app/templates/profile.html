@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .profile-container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #555;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>User Profile</h1>
+
+    <div class="profile-container">
+        <img src="{{ url_for('static', filename='profile_photos/' + (user.profile_photo or 'default.png')) }}" alt="Profile Photo" class="profile-photo">
+        <h2>{{ user.username }}</h2>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Role:</strong> {{ user.role }}</p>
+        <p><strong>City:</strong> {{ user.city }}</p>
+        <p><strong>State:</strong> {{ user.state }}</p>
+        <p><strong>Country:</strong> {{ user.country }}</p>
+
+        <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Edit Profile Photo</a>
+        <a href="{{ url_for('home') }}" class="btn">Back to Home</a>
+    </div>
+
+</body>
+</html>

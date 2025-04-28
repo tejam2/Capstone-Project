@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login – GCInsights V2.0</title>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #5aa8b0, #276973);
+        }
+        .container {
+            display: flex;
+            width: 850px;
+            margin: 80px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+        .form-container {
+            flex: 1;
+            padding: 40px;
+        }
+        .form-container h2 {
+            color: #1890ff;
+            font-size: 32px;
+            font-family: 'Merriweather', serif;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1890ff;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .form-container a {
+            color: #1890ff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .form-container a:hover {
+            text-decoration: underline;
+        }
+        .social-login {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .social-login a {
+            margin: 0 8px;
+        }
+        .social-login img {
+            height: 30px;
+            width: 30px;
+            object-fit: contain;
+            transition: transform 0.2s;
+        }
+        .social-login img:hover {
+            transform: scale(1.1);
+        }
+        .right-image {
+            flex: 1;
+            background: url("{{ url_for('static', filename='images/gcinsights-bg.jpg') }}") center/cover no-repeat;
+            position: relative;
+        }
+        .overlay-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 20px;
+            text-align: center;
+        }
+        .flash-message {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2>LOGIN</h2>
+
+            <!-- Flash message -->
+	    {% with messages = get_flashed_messages(with_categories=true) %}
+	      {% if messages %}
+	        <ul style="color: green; font-size: 14px; text-align: center;">
+	          {% for category, message in messages %}
+	            <li>{{ message }}</li>
+	          {% endfor %}
+	        </ul>
+	      {% endif %}
+	    {% endwith %}
+
+            <form method="post" action="/login">
+                <label>Email or Username</label>
+                <input type="text" name="email" placeholder="Enter your email or username" required>
+
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Enter your password" required>
+
+
+
+                <button type="submit">LOGIN</button>
+
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <a href="/signup">Register New Account? Sign Up</a>
+                </div>
+
+                <p style="margin-top: 10px;">
+                   <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+                </p>
+                
+            </form>
+        </div>
+        <div class="right-image">
+            <div class="overlay-title">GCInsights V2.0</div>
+        </div>
+    </div>
+</body>
+</html>

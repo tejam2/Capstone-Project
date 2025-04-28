@@ -1,0 +1,13 @@
+<!-- templates/analysis_result.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Advanced Analysis Result</title>
+</head>
+<body>
+  <h2>Analysis Complete</h2>
+  <p>Your comparison and clustering result has been generated.</p>
+  <a href="{{ url_for('static', filename=report_file.split('/')[-1]) }}" target="_blank">🔍 View PDF</a> |
+  <a href="{{ url_for('static', filename=report_file.split('/')[-1]) }}" download>⬇ Download PDF</a>
+</body>
+</html>

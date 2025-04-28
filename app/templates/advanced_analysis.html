@@ -1,0 +1,54 @@
+<form method="POST">
+  <label for="omics_type">Omics Layer:</label>
+  <select name="omics_type" required>
+    <option value="Proteins">Proteins</option>
+    <option value="Lipids">Lipids</option>
+  </select>
+
+  <label for="fraction">Fraction:</label>
+  <select name="fraction" required>
+    <option value="GCM">GCM</option>
+    <option value="GCP">GCP</option>
+  </select>
+
+  <label for="clusters">Clusters:</label>
+  <input type="number" name="clusters" min="2" max="10" required>
+
+  <label for="min_cluster_size">Min Cluster Size (0.01–0.5):</label>
+  <input type="text" name="min_cluster_size" value="0.1" required>
+
+  <label for="min_cluster_size_increment">Cluster Size Increment:</label>
+  <input type="text" name="min_cluster_size_increment" value="0.02">
+
+  <label for="min_cluster_iterations">Cluster Iterations:</label>
+  <input type="number" name="min_cluster_iterations" value="2">
+
+  <label for="algorithms">Algorithms:</label><br>
+  <input type="checkbox" name="algorithms" value="MKM" checked> MiniBatch KMeans<br>
+  <input type="checkbox" name="algorithms" value="AFP"> Affinity Propagation<br>
+  <input type="checkbox" name="algorithms" value="MSH"> MeanShift<br>
+  <input type="checkbox" name="algorithms" value="SPC"> Spectral Clustering<br>
+  <input type="checkbox" name="algorithms" value="WRD"> Ward<br>
+  <input type="checkbox" name="algorithms" value="AGC"> Agglomerative Clustering<br>
+  <input type="checkbox" name="algorithms" value="DBS"> DBSCAN<br>
+  <input type="checkbox" name="algorithms" value="OPT"> OPTICS<br>
+  <input type="checkbox" name="algorithms" value="BRC"> Birch<br>
+  <input type="checkbox" name="algorithms" value="GMX"> Gaussian Mixture<br>
+  <br>
+  <button type="submit">Run Analysis</button>
+</form>
+
+{% if img_url %}
+  <h3>Clustering Output</h3>
+  <img src="{{  url_for('static', filename=img_path) }}" width="800" style="border:1px solid #ccc; padding:5px;"><br><br>
+
+  <a href="{{ url_for('static', filename=img_path) }}" download class="btn btn-primary" target="_blank">📷 Download Image</a>
+  <a href="{{ url_for('static', filename=pdf_path) }}" download class="btn btn-success" target="_blank">📄 Download PDF</a>
+{% endif %}
+
+
+
+
+
+
+ 

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GCInsights - Interactive Query</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>GCInsights - Interactive Query</h1>
+
+    <form method="POST" action="/interactive-query">
+        <label>Omics Layer:</label>
+        <select name="omic" required>
+            <option value="protein">Protein</option>
+            <option value="lipid">Lipid</option>
+        </select><br><br>
+
+        <label>Fraction:</label>
+        <select name="fraction" required>
+            <option value="gcm">GCM</option>
+            <option value="gcp">GCP</option>
+        </select><br><br>
+
+        <label>Developmental Stage:</label>
+        <select name="stage" required>
+            <option value="E18">E18</option>
+            <option value="P0">P0</option>
+            <option value="P3">P3</option>
+            <option value="P6">P6</option>
+            <option value="P9">P9</option>
+        </select><br><br>
+
+        <label>Gene Names (space-separated):</label>
+        <input type="text" name="genes" required placeholder="e.g., Thy1 Lamp1"><br><br>
+
+        <label>Select Graph Types:</label><br>
+        <input type="checkbox" name="graph_types" value="bar" checked> Bar<br>
+        <input type="checkbox" name="graph_types" value="line" checked> Line<br>
+        <input type="checkbox" name="graph_types" value="box"> Box Plot<br>
+        <input type="checkbox" name="graph_types" value="hist"> Histogram<br>
+        <input type="checkbox" name="graph_types" value="scatter"> Scatter Matrix<br>
+        <input type="checkbox" name="graph_types" value="3d"> 3D Bar<br><br>
+
+        <button type="submit">Generate Graphs</button>
+    </form>
+
+    {% if pdf_path %}
+    <hr>
+    <h2>📥 Download Report</h2>
+    <a href="{{ pdf_path }}" download style="font-size: 16px;">Download PDF Report</a>
+
+    <h2>🖼️ Generated Graphs</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        {% for img in image_paths %}
+        <div style="text-align: center;">
+            <img src="{{ img }}" alt="Graph Image" width="300" style="border: 1px solid #ccc; padding: 5px;"><br>
+            <a href="{{ img }}" download>Download</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+         {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GCInsights V2.0 - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #8fbfc5, #426b75);
+      color: #333;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #003e46;
+      color: white;
+      padding: 10px 20px;
+    }
+
+    .navbar h1 {
+      font-size: 22px;
+    }
+
+    .navbar .profile {
+      position: relative;
+    }
+
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #003e46;
+      color: white;
+      padding: 10px 20px;
+      height: 60px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 30px;
+      right: -10px;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      z-index: -50;
+    }
+
+    .dropdown a {
+      display: block;
+      padding: 12px;
+      text-decoration: none;
+      color: #003e46;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .dropdown a:hover {
+      background-color: #e0f7fa;
+    }
+
+    .profile:hover .dropdown {
+      display: block;
+    }
+
+    .sidebar {
+      width: 80px;
+      height: 100vh;
+      background-color: transparent;
+      padding: 20px 0;
+      position: fixed;
+      top: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .navbar .profile img {
+      height: 40px;
+      width: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .sidebar-item {
+      position: relative;
+      margin: 20px 0;
+      cursor: pointer;
+    }
+
+    .sidebar-item img {
+      height: 44px;
+      width: 44px;
+    }
+
+    .sidebar-item span {
+      position: absolute;
+      left: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: white;
+      color: #003e46;
+      padding: 6px 14px;
+      border-radius: 5px;
+      white-space: nowrap;
+      display: none;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+
+    .sidebar-item:hover span {
+      display: inline-block;
+    }
+
+    .main-content {
+      margin-left: 240px;
+      padding: 80px 40px 4px;
+    }
+
+    .metrics {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .metric-box {
+      flex: 1;
+      margin: 0 10px;
+      background: white;
+      border-radius: 10px;
+      text-align: center;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .metric-box h2 {
+      margin: 10px 0 5px;
+      font-size: 24px;
+    }
+
+    .metric-box p {
+      font-weight: bold;
+      
+    }
+
+    .diagram {
+      width: 100%;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .diagram img {
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .description {
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .description h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+  
+    body.dark-theme {
+      background: linear-gradient(to bottom, #2c3e50, #34495e);
+      color: #f0f0f0;
+    }
+
+    body.dark-theme .navbar {
+      background-color: #1b262c;
+      color: #f0f0f0;
+    }
+
+    body.dark-theme .dropdown {
+      background-color: #2f3640;
+    }
+
+    body.dark-theme .dropdown a {
+      color: #f0f0f0;
+    }
+
+    body.dark-theme .dropdown a:hover {
+      background-color: #353b48;
+    }
+
+    body.dark-theme .sidebar-item span {
+      background-color: #2f3640;
+      color: #f0f0f0;
+    }
+
+    body.dark-theme .metric-box {
+      background-color: #2f3640;
+      color: #f0f0f0;
+    }
+
+    body.dark-theme .description {
+      background-color: rgba(47, 54, 64, 0.9);
+      color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <h1>GCInsights V2.0</h1>
+    <div class="profile">
+      <img src="{{ url_for('static', filename='profile_photos/' + (current_user.profile_photo or 'default.png')) }}" alt="Profile" onclick="toggleDropdown()">
+      <div class="dropdown" id="dropdown">
+        <a href="{{ url_for('profile') }}">User Profile</a>
+        <a href="{{ url_for('change_password') }}" class="btn btn-warning">Change Password</a>
+
+        <a href="javascript:void(0);" onclick="toggleTheme()">Theme</a>
+
+        <a href="#">History</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/home-icon.png') }}" alt="Home">
+      <span>Home</span>
+    </div>
+    <a href="{{ url_for('interactive_query') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/query-icon.png') }}" alt="Interactive Query">
+      <span>Interactive Query</span>
+    </a>
+    <a href="{{ url_for('visualizations') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/visual-icon.png') }}" alt="Visualizations">
+      <span>Visualizations</span>
+    </a>
+    <a href="{{ url_for('advanced_analysis') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/analysis-icon.png') }}" alt="Advanced Analysis">
+      <span>Advanced Analysis</span>
+    </a>
+    <a href="{{ url_for('deep_ml') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/ml-icon.png') }}" alt="Deep ML">
+      <span>Deep ML</span>
+    </a>
+    
+    <a href="https://umiamihealth.org/bascom-palmer-eye-institute/research/laboratory-research/miami-integrative-metabolomics-research-center" class="sidebar-item" target="_blank" rel="noopener noreferrer">
+      <img src="{{ url_for('static', filename='images/info-icon.png') }}" alt="About">
+      <span>About</span>
+    </a>
+  </div>
+
+  <div class="main-content">
+    <div class="metrics">
+      <div class="metric-box">
+        <img src="{{ url_for('static', filename='images/measures-icon.png') }}" height="50">
+        <h2>83,196</h2>
+        <p>Measurements</p>
+      </div>
+      <div class="metric-box">
+        <img src="{{ url_for('static', filename='images/features-icon.png') }}" height="50">
+        <h2>2,771</h2>
+        <p>Features</p>
+      </div>
+      <div class="metric-box">
+        <img src="{{ url_for('static', filename='images/stages-icon.png') }}" height="50">
+        <h2>5</h2>
+        <p>Developmental Stages</p>
+      </div>
+    </div>
+    <div class="diagram">
+      <img src="{{ url_for('static', filename='images/process-diagram.png') }}" alt="Process Diagram">
+    </div>
+    <div class="description">
+      <h2>Neuronal Growth Cone Multi-Omics Insight (GC-Insights)</h2>
+      <p>
+        A web-based tool to navigate proteomics and lipidomics data. GC-Insights offers tools that enable the analysis and output
+        of high resolution mass spectrometric data of growth cone proteins and lipids generated after extensive fractionation.
+        Please click for tutorial and overview below.
+      </p>
+    </div>
+  </div>
+<script>
+  function toggleDropdown() {
+    var dropdown = document.getElementById('dropdown');
+    dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+  }
+  let isDarkMode = false;
+  
+  function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    const body = document.body;
+    
+    if (isDarkMode) {
+      body.classList.add('dark-theme');
+    } else {
+      body.classList.remove('dark-theme');
+    }
+  }
+</script>
+</body>
+</html>
+
+
+

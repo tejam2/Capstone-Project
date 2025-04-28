@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+.alert-success {
+    color: white;
+    background-color: green;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+}
+.alert-danger {
+    color: white;
+    background-color: red;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+}
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Profile Photo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<h1>Edit Profile Photo</h1>
+
+<form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data">
+    <label for="profile_photo">Choose a new profile photo:</label><br><br>
+    <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required><br><br>
+    <button type="submit">Upload</button>
+</form>
+
+<br>
+<a href="{{ url_for('profile') }}">Back to Profile</a>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+</body>
+</html>

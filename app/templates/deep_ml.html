@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deep ML Analysis</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    body { padding: 40px; background-color: #f9f9f9; font-family: 'Segoe UI', sans-serif; }
+    .form-container { background: white; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    .btn-submit { padding: 10px 20px; background-color: #003e46; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    .btn-submit:hover { background-color: #005662; }
+    select, label { display: block; margin-bottom: 10px; width: 100%; padding: 8px; }
+    img { max-width: 80%; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);}
+    h2, h3 { color: #003e46; }
+  </style>
+</head>
+<body>
+
+<div class="form-container">
+  <h2>Deep ML Analysis</h2>
+  <form action="{{ url_for('deep_ml') }}" method="POST">
+    <label for="dataset">Select Dataset:</label>
+    <select name="dataset" id="dataset" required>
+      <option value="">-- Select a CSV File --</option>
+      <option value="GCM_GeneNames_Normalized.csv">GCM Proteins</option>
+      <option value="GCP_GeneNames_Normalized.csv">GCP Proteins</option>
+      <option value="GCM_LipidClass_Normalized.csv">GCM Lipids</option>
+      <option value="GCP_LipidClass_Normalized.csv">GCP Lipids</option>
+    </select>
+
+    <label for="model_choice">Select Model:</label>
+    <select name="model_choice" id="model_choice" required>
+      <option value="1">Logistic Regression</option>
+      <option value="2">Random Forest</option>
+      <option value="3">Both</option>
+    </select>
+
+    <button type="submit" class="btn-submit">Run Deep ML 🚀</button>
+  </form>
+</div>
+
+{% if results %}
+<div style="margin-top: 40px; text-align: center;">
+
+  {% if results.pca_path %}
+    <img src="{{ results.pca_path }}" alt="PCA Projection">
+  {% endif %}
+
+  {% if results.tsne_path %}
+    <img src="{{ results.tsne_path }}" alt="t-SNE Projection">
+  {% endif %}
+
+  {% if results.umap_path %}
+    <img src="{{ results.umap_path }}" alt="UMAP Projection">
+  {% endif %}
+
+  {% if results.accuracy_lr %}
+    <h2>Logistic Regression Accuracy: {{ results.accuracy_lr }}%</h2>
+  {% endif %}
+
+  {% if results.accuracy_rf %}
+    <h2>Random Forest Accuracy: {{ results.accuracy_rf }}%</h2>
+  {% endif %}
+
+  {% if results.top_features %}
+    <h3>Top Important Features (Random Forest):</h3>
+    <ul style="list-style-type: none; padding: 0;">
+      {% for feature, score in results.top_features %}
+        <li><b>{{ feature }}</b> — Importance: {{ score }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+</div>
+{% endif %}
+
+</body>
+</html>
