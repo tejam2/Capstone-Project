@@ -18,7 +18,7 @@ from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app.integrated_gene_graph_logic import run_gene_graph_pipeline
-from app.deepml_util import run_deepml_pipeline
+from app.deepml_util import run_combined_deepml_analysis
 from PIL import Image, ImageOps, ImageDraw  # ADD THIS import
 import numpy as np
 from sklearn.decomposition import PCA
@@ -27,6 +27,11 @@ import umap
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sqlalchemy import Text
+import json
+from flask import jsonify
+import re
+
 
 
 # App setup
@@ -41,7 +46,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'GCinsights.reset@gmail.com'
-app.config['MAIL_PASSWORD'] = 'buyu wiux dbwu wcrb'
+app.config['MAIL_PASSWORD'] = 'MAIL_PASSWORD'
 app.config['MAIL_DEFAULT_SENDER'] = ('GCInsights Support', 'gcinsights.support@gmail.com')
 
 # Database
@@ -50,15 +55,30 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Cloudinary Config
 cloudinary.config(
-    cloud_name="dwngugeu6",
-    api_key="294122356834448",
-    api_secret="nDl3udJNOhd26HVrtnxNY62RhT0",
+    cloud_name="cloud_name",
+    api_key="api_key",
+    api_secret="api_secret",
     secure=True
 )
 
-def upload_to_cloudinary(file_path, folder="results"):
-    result = cloudinary.uploader.upload(file_path, folder=folder, resource_type="auto")
-    return result["secure_url"]
+def upload_to_cloudinary(filepath, is_raw=False):
+    filename = os.path.basename(filepath)
+    public_id = f"gcinsights/results/{filename.rsplit('.', 1)[0]}"
+
+    upload_result = cloudinary.uploader.upload(
+        filepath,
+        public_id=public_id,
+        resource_type="raw" if is_raw else "image",
+        overwrite=True
+    )
+
+    # Force download link
+    base_url = upload_result['secure_url']
+    download_url = base_url.replace('/upload/', '/upload/fl_attachment/')
+    return download_url
+
+def is_strong_password(pwd):
+    return re.match(r"^(?=.*\d)(?=.*[a-zA-Z]).{8,}$", pwd)
 
 # Allow uploads to this folder
 UPLOAD_FOLDER = os.path.join("app", "static", "profile_photos")
@@ -97,12 +117,24 @@ class User(db.Model, UserMixin):
     country = db.Column(db.String(100))
     profile_photo = db.Column(db.String(255), nullable=True, default='default.png')
 
-
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+class DownloadHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    file_name = db.Column(db.String(255))
+    file_url = db.Column(db.String(500))
+    download_type = db.Column(db.String(100))  # e.g., 'Interactive Query', 'Deep ML'
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    parameters = db.Column(Text)
+
+    user = db.relationship('User', backref='downloads')
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -120,6 +152,11 @@ def visualizations():
 @app.route('/advanced-analysis', methods=['GET', 'POST'])
 @login_required
 def advanced_analysis():
+
+    prefill = {}
+    if 'rerun_params' in session:
+        prefill = session.pop('rerun_params', {})
+
     if request.method == 'POST':
         try:
             # Gather form inputs
@@ -130,6 +167,9 @@ def advanced_analysis():
             mcsi = request.form.get('min_cluster_size_increment', '0.02')
             mcsic = request.form.get('min_cluster_iterations', '2')
             algorithms = request.form.getlist('algorithms')
+
+            params = {"type": "advanced", "omics_type": omics_type, "fraction": fraction, "clusters": clusters, "min_cluster_size": min_cluster_size, "mcsi": mcsi, "mcsic": mcsic, "algorithms": algorithms}
+
 
             eval_str = ' '.join(algorithms)
 
@@ -173,6 +213,10 @@ def advanced_analysis():
             img_url = upload_to_cloudinary(figure_path, is_raw=False)
             pdf_url = upload_to_cloudinary(pdf_path, is_raw=True)
 
+            db.session.add(DownloadHistory(user_id=current_user.id, file_name=figure_filename, file_url=img_url, download_type="Advanced Analysis", parameters=json.dumps(params)))
+            db.session.add(DownloadHistory(user_id=current_user.id, file_name=pdf_filename, file_url=pdf_url, download_type="Advanced Analysis", parameters=json.dumps(params)))
+            db.session.commit()
+
             return render_template("advanced_analysis.html", img_url=img_url, pdf_url=pdf_url, img_path=os.path.join("results", figure_filename), pdf_path=os.path.join("results", pdf_filename))
 
 
@@ -182,35 +226,29 @@ def advanced_analysis():
             traceback.print_exc()
             flash(f"Unexpected error: {str(e)}", "danger")
 
-    return render_template("advanced_analysis.html")
+    
+    return render_template("advanced_analysis.html", **prefill)
 
-
-def upload_to_cloudinary(filepath, is_raw=False):
-    filename = os.path.basename(filepath)
-    public_id = f"gcinsights/results/{filename.rsplit('.', 1)[0]}"
-
-    upload_result = cloudinary.uploader.upload(
-        filepath,
-        public_id=public_id,
-        resource_type="raw" if is_raw else "image",
-        overwrite=True
-    )
-    return upload_result['secure_url']
 
 @app.route("/interactive-query", methods=["GET", "POST"])
 def interactive_query():
+
+    prefill = {}
+    if 'rerun_params' in session:
+         prefill = session.pop('rerun_params', {})
+
     if request.method == "POST":
         omic = request.form.get("omic")
         fraction = request.form.get("fraction")
         stage = request.form.get("stage")
-        genes_input = request.form.get("genes")
+        genes = request.form.getlist("genes[]")
         graph_types_selected = request.form.getlist("graph_types")
 
-        if not all([omic, fraction, stage, genes_input, graph_types_selected]):
+        if not all([omic, fraction, stage, genes, graph_types_selected]):
             return "Missing required inputs", 400
 
-        genes = genes_input.split()
-        output_prefix = os.path.join("app", "static", "output", f"{'_'.join(genes)}_{stage}")
+
+        output_prefix = os.path.join("app", "static", "results", f"{'_'.join(genes)}_{stage}")
 
         # Ensure output folder exists
         os.makedirs(os.path.dirname(output_prefix), exist_ok=True)
@@ -228,12 +266,19 @@ def interactive_query():
 
             # Convert to relative static paths for HTML
             image_paths = [img.replace("app/static/", "/static/") for img in image_files]
-            pdf_path = pdf_path.replace("app/static/", "/static/")
+            pdf_path_rel = pdf_path.replace("app/static/", "/static/")
 
+            for img in image_files:
+                url = upload_to_cloudinary(img)
+                db.session.add(DownloadHistory(user_id=current_user.id, file_name=os.path.basename(img), file_url=url, download_type="Interactive Query", parameters=json.dumps({"type": "interactive", "omic": omic, "fraction": fraction, "stage": stage, "genes": genes, "graph_types": graph_types_selected})))
+
+            pdf_url = upload_to_cloudinary(pdf_path, is_raw=True)
+            db.session.add(DownloadHistory(user_id=current_user.id, file_name=os.path.basename(pdf_path), file_url=pdf_url, download_type="Interactive Query", parameters=json.dumps({"type": "interactive", "omic": omic, "fraction": fraction, "stage": stage, "genes": genes, "graph_types": graph_types_selected})))
+            db.session.commit()
             return render_template(
                 "interactive_query.html",
                 image_paths=image_paths,
-                pdf_path=pdf_path
+                pdf_path=pdf_path_rel
             )
 
         except ValueError as ve:
@@ -242,9 +287,44 @@ def interactive_query():
         except Exception as e:
             flash("An unexpected error occurred. Please try again.", 'danger')
             return redirect(url_for('interactive_query'))
+ 
+    return render_template("interactive_query.html", **prefill)
 
-    return render_template("interactive_query.html")
+@app.route('/get_gene_names', methods=['POST'])
+def get_gene_names():
+    data = request.get_json()
+    omics_layer = data.get('omics_layer')
+    fraction = data.get('fraction')
 
+    if omics_layer and fraction:
+        filename = None
+        if omics_layer == "Protein" and fraction == "GCM":
+            filename = "a.csv"
+        elif omics_layer == "Lipid" and fraction == "GCM":
+            filename = "b.csv"
+        elif omics_layer == "Protein" and fraction == "GCP":
+            filename = "c.csv"
+        elif omics_layer == "Lipid" and fraction == "GCP":
+            filename = "d.csv"
+
+        if filename:
+            try:
+                filepath = os.path.join(app.root_path, "static", "data", filename)
+  # updated to match your path
+                with open(filepath, "r", encoding="utf-8-sig") as f:
+                    genes = [line.strip() for line in f.readlines() if line.strip()]
+                return jsonify({"genes": genes})
+            except Exception as e:
+                return jsonify({"error": str(e)})
+    return jsonify({"genes": []})
+
+
+
+@app.route("/history")
+@login_required
+def download_history():
+    history = DownloadHistory.query.filter_by(user_id=current_user.id).order_by(DownloadHistory.timestamp.desc()).all()
+    return render_template("history.html", history=history)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -261,18 +341,29 @@ def login():
             flash("Incorrect username/email or password", "error")
     return render_template("login.html")
 
+
+from email_validator import validate_email, EmailNotValidError
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
         username = request.form.get("username")
         email = request.form.get("email")
+        try:
+            valid = validate_email(email)
+            email = valid.email  # cleaned email
+        except EmailNotValidError as e:
+            flash("Invalid email address: " + str(e), "danger")
+            return redirect(url_for("signup"))
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
         role = request.form.get("role")
         state = request.form.get("state")
         city = request.form.get("city")
         country = request.form.get("country")
-
+        if not is_strong_password(password):
+            flash("Password must be at least 8 characters long and include at least one number and one letter.", "danger")
+            return redirect(url_for('signup'))
         if password != confirm_password:
             flash("Passwords do not match", "warning")
             return redirect(url_for("signup"))
@@ -333,31 +424,45 @@ GCInsights Support Team
             try:
                 msg = Message(subject, sender=("GCInsights Support", "gcinsights.support@gmail.com"), recipients=[email], body=body)
                 mail.send(msg)
-                flash('Check your email for a reset link.', 'info')
+                flash('Check your email for a reset link. If you can\'t find the link in your mail check in the spam mails.', 'info')
             except Exception as e:
                 flash('Could not send email. Check configuration.', 'danger')
         else:
             flash('Email not found.', 'warning')
     return render_template('forgot_password.html')
 
+
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     try:
         email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
-    except Exception:
-        flash("Invalid or expired link.", "danger")
+    except Exception as e:
+        flash("The reset link is invalid or has expired.", "error")
         return redirect(url_for('login'))
 
-    if request.method == 'POST':
-        new_password = request.form['password']
+    if request.method == "POST":
+        new_password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
+        if new_password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return render_template("reset_password.html")
+
+
+        if not is_strong_password(new_password):
+            flash("Password must be at least 8 characters long and include at least one number and one letter.", "danger")
+            return redirect(request.url)
+
         user = db.session.query(User).filter_by(email=email).first()
         if user:
             user.set_password(new_password)
             db.session.commit()
-            flash("Password has been reset. Please log in.", "success")
+            flash("Your password has been updated successfully.", "success")
             return redirect(url_for('login'))
+        else:
+            flash("User not found.", "error")
 
-    return render_template('reset_password.html')
+    return render_template("reset_password.html")
 
 @app.route("/profile")
 @login_required
@@ -412,67 +517,238 @@ def edit_profile():
 
     return render_template("edit_profile.html")
 
-@app.route("/change-password", methods=["GET", "POST"])
+
+
+@app.route('/change-password', methods=['GET', 'POST'])
 @login_required
 def change_password():
     if request.method == "POST":
         current_password = request.form.get("current_password")
-        new_password = request.form.get("new_password")
-        confirm_new_password = request.form.get("confirm_new_password")
+        new_password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
 
-        # Check if current password is correct
         if not current_user.check_password(current_password):
-            flash("Current password is incorrect.", "danger")
+            flash("Current password is incorrect.", "error")
             return redirect(url_for('change_password'))
 
-        # Check if new passwords match
-        if new_password != confirm_new_password:
-            flash("New passwords do not match.", "danger")
+        if new_password != confirm_password:
+            flash("New passwords do not match.", "error")
             return redirect(url_for('change_password'))
 
-        # Update the password
+        if not is_strong_password(new_password):
+            flash("Password must be at least 8 characters long and include at least one number and one letter.", "danger")
+            return redirect(url_for('change_password'))
+
         current_user.set_password(new_password)
         db.session.commit()
-
-        flash("Password changed successfully!", "success")
+        flash("Your password has been updated.", "success")
         return redirect(url_for('profile'))
 
     return render_template("change_password.html")
 
+
 @app.route("/deep-ml", methods=["GET", "POST"])
 @login_required
 def deep_ml():
+
+    prefill = {}
+    if 'rerun_params' in session:
+        prefill = session.pop('rerun_params', {})
+
     if request.method == "POST":
-        dataset_filename = request.form.get("dataset")
-        model_choice = request.form.get("model_choice")
-        file_path = os.path.join("app", "static", "data", dataset_filename)
-        if not dataset_filename:
-            flash("Please select a dataset.", "danger")
+        selected = request.form.getlist("datasets")
+        if len(selected) != 2:
+            flash("Please select exactly two datasets.", "warning")
             return redirect(url_for("deep_ml"))
 
-        dataset_path = os.path.join(app.root_path, "static", "data", dataset_filename)
+        dataset_path1 = os.path.join("app", "static", "data", selected[0])
+        dataset_path2 = os.path.join("app", "static", "data", selected[1])
 
-        if not os.path.exists(dataset_path):
-            flash("Selected dataset file not found.", "danger")
+        try:
+            results = run_combined_deepml_analysis(dataset_path1, dataset_path2)
+
+            image_paths = [
+                os.path.join("app", results["pca_path"].lstrip("/")),
+                os.path.join("app", results["tsne_path"].lstrip("/")),
+                os.path.join("app", results["cm_path"].lstrip("/"))
+            ]
+            pdf_path = os.path.join("app", results["pdf_path"].lstrip("/"))
+
+            for img in image_paths:
+                url = upload_to_cloudinary(img)
+                db.session.add(DownloadHistory(user_id=current_user.id, file_name=os.path.basename(img), file_url=url, download_type="Deep ML", parameters=json.dumps({"type": "deepml", "datasets": selected})))
+
+            pdf_url = upload_to_cloudinary(pdf_path, is_raw=True)
+            db.session.add(DownloadHistory(user_id=current_user.id, file_name=os.path.basename(pdf_path), file_url=pdf_url, download_type="Deep ML", parameters=json.dumps({"type": "deepml", "datasets": selected})))
+
+            db.session.commit()
+            return render_template("deep_ml.html", results=results)
+        except Exception as e:
+            traceback.print_exc()
+            flash("An error occurred during analysis.", "danger")
             return redirect(url_for("deep_ml"))
 
-        # Run Deep ML pipeline
-        img_files = run_deepml_pipeline(dataset_path, model_choice)
-        results = run_deepml_pipeline(file_path, model_choice)
-        if not results.get("accuracy_lr") and not results.get("accuracy_rf"):
-            flash("Warning: Could not train model properly — not enough classes in data.", "warning")
+    return render_template("deep_ml.html", results=None, **prefill)
 
 
-        return render_template("deep_ml.html", results=img_files)
+@app.route("/rerun/<int:history_id>")
+@login_required
+def rerun_task(history_id):
+    history = DownloadHistory.query.get_or_404(history_id)
 
-    return render_template("deep_ml.html")
+    if history.user_id != current_user.id:
+        flash("Unauthorized access", "danger")
+        return redirect(url_for("download_history"))
+
+    if not history.parameters:
+        flash("This entry has no saved parameters to rerun.", "warning")
+        return redirect(url_for("download_history"))
+
+    try:
+        params = json.loads(history.parameters)
+        task_type = params.get("type")
+
+        if task_type == "interactive":
+            session['rerun_params'] = params
+            return redirect(url_for("interactive_query"))
+        elif task_type == "advanced":
+            session['rerun_params'] = params
+            return redirect(url_for("advanced_analysis"))
+        elif task_type == "deepml":
+            session['rerun_params'] = params
+            return redirect(url_for("deep_ml"))
+        else:
+            flash("Unknown task type", "warning")
+    except Exception as e:
+        flash(f"Error parsing parameters: {str(e)}", "danger")
+
+    return redirect(url_for("download_history"))
 
 
+@app.route("/delete/<int:history_id>", methods=["POST"])
+@login_required
+def delete_history_item(history_id):
+    history = DownloadHistory.query.get_or_404(history_id)
+    if history.user_id != current_user.id:
+        flash("Unauthorized", "danger")
+        return redirect(url_for("download_history"))
 
-@app.route("/admin/users")
-def list_users():
+    db.session.delete(history)
+    db.session.commit()
+    flash("Download entry deleted.", "success")
+    return redirect(url_for("download_history"))
+
+
+@app.route("/request-admin", methods=["POST"])
+@login_required
+def request_admin():
+    token = serializer.dumps(current_user.id, salt="admin-request")
+    approve_url = url_for("confirm_admin", token=token, _external=True)
+    deny_url = url_for("deny_admin", token=token, _external=True)
+
+    send_email(
+        subject="Approve Admin Access",
+        recipients=["gcinsights.reset@gmail.com"],
+        body=f"""
+    Approve admin access for {current_user.email}: {approve_url}
+
+    To deny the request, click here: {deny_url}
+    """
+    )
+    flash("Admin access request sent for approval.", "info")
+    return redirect(url_for("profile"))
+
+@app.route("/confirm-admin/<token>")
+def confirm_admin(token):
+    try:
+        user_id = serializer.loads(token, salt="admin-request", max_age=3600)
+        user = User.query.get(user_id)
+        user.role = "admin"
+        db.session.commit()
+
+        send_email(
+            subject="Admin Access Approved",
+            recipients=[user.email],
+            body="✅ Your request for admin access has been approved. You can now access the admin dashboard."
+        )
+
+        flash(f"{user.email} is now an admin!", "success")
+    except Exception as e:
+        flash("Invalid or expired token.", "danger")
+    return redirect(url_for("login"))
+
+@app.route("/deny-admin/<token>")
+def deny_admin(token):
+    try:
+        user_id = serializer.loads(token, salt="admin-request", max_age=3600)
+        user = User.query.get(user_id)
+
+        send_email(
+            subject="Admin Access Denied",
+            recipients=[user.email],
+            body="❌ Your request for admin access has been denied by the GCInsights team."
+        )
+
+        flash(f"Denied admin access for {user.email}", "info")
+    except Exception:
+        flash("Invalid or expired token.", "danger")
+    return redirect(url_for("login"))
+
+
+@app.route("/admin")
+@login_required
+def admin_dashboard():
+    if current_user.role != "admin":
+        abort(403)
+
     users = User.query.all()
-    return render_template("user_list.html", users=users)
+    stats = {}
+
+    for user in users:
+        downloads = DownloadHistory.query.filter_by(user_id=user.id).all()
+
+        # Count per download_type
+        interactive = sum(1 for d in downloads if d.download_type == "Interactive Query")
+        advanced = sum(1 for d in downloads if d.download_type == "Advanced Analysis")
+        deepml = sum(1 for d in downloads if d.download_type == "Deep ML")
+
+        stats[user.id] = {
+            "email": user.email,
+            "username": user.username,
+            "role": user.role,
+            "city": user.city,
+            "state": user.state,
+            "country": user.country,
+            "downloads": len(downloads),
+            "interactive": interactive,
+            "advanced": advanced,
+            "deepml": deepml,
+        }
+
+    return render_template("admin_dashboard.html", users=users, stats=stats)
+
+
+
+import smtplib
+from email.mime.text import MIMEText
+
+def send_email(subject, recipients, body):
+    sender = "gcinsights.support@gmail.com"
+    password = "buyu wiux dbwu wcrb"  # Use Gmail App Password
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = ", ".join(recipients)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender, password)
+        server.sendmail(sender, recipients, msg.as_string())
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 
 if __name__ == "__main__":
     with app.app_context():

@@ -1,54 +1,138 @@
-<form method="POST">
-  <label for="omics_type">Omics Layer:</label>
-  <select name="omics_type" required>
-    <option value="Proteins">Proteins</option>
-    <option value="Lipids">Lipids</option>
-  </select>
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .form-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 30px;
+    font-family: 'Times New Roman', serif;
+    justify-content: center;
+  }
+  .form-group {
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+  }
+  .form-group-full {
+    flex: 1 1 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .form-group label {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  .form-group input,
+  .form-group select {
+    padding: 8px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  .form-actions {
+    margin-top: 20px;
+    text-align: center;
+  }
+  button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #267DF4;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    font-family: 'Times New Roman', serif;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .analysis-image {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .download-buttons {
+    text-align: center;
+  }
+  .download-buttons a {
+    display: inline-block;
+    margin: 10px 10px 0 0;
+    padding: 8px 16px;
+    background-color: #267DF4;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Times New Roman', serif;
+  }
+  .main-content {
+    margin-left: 120px;  
+    margin-top: 30px;    
+    padding: 30px 40px;  
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
+  }
+</style>
 
-  <label for="fraction">Fraction:</label>
-  <select name="fraction" required>
-    <option value="GCM">GCM</option>
-    <option value="GCP">GCP</option>
-  </select>
+<div class="main-content">
+  <h2 style="text-align: center;">Advanced Analysis</h2>
+  <form method="POST" class="form-container">
+    <div class="form-group">
+      <label for="omics_type">Omics Layer:</label>
+      <select name="omics_type" required>
+        <option value="Proteins" {% if omics_type == 'Proteins' %}selected{% endif %}>Proteins</option>
+        <option value="Lipids" {% if omics_type == 'Lipids' %}selected{% endif %}>Lipids</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="fraction">Fraction:</label>
+      <select name="fraction" required>
+        <option value="GCM" {% if fraction == 'GCM' %}selected{% endif %}>GCM</option>
+        <option value="GCP" {% if fraction == 'GCP' %}selected{% endif %}>GCP</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="clusters">Number of Clusters (2-10):</label>
+      <input type="number" name="clusters" min="2" max="10" required value="{{ clusters or '3' }}">
+    </div>
+    <div class="form-group">
+      <label for="min_cluster_size">Minimum Cluster Size (0.1–0.5):</label>
+      <input type="text" name="min_cluster_size" value="{{ min_cluster_size or '0.1' }}" required>
+    </div>
+    <div class="form-group">
+      <label for="min_cluster_size_increment">Minimum Cluster Size Increment (0.01–0.10):</label>
+      <input type="text" name="min_cluster_size_increment" value="{{ mcsi or '0.02' }}">
+    </div>
 
-  <label for="clusters">Clusters:</label>
-  <input type="number" name="clusters" min="2" max="10" required>
+    <div class="form-group-full">
+      <label for="algorithms">Algorithms (Select 2 or more):</label>
+      <div style="line-height: 1.8; font-size: 14px;">
+        <input type="checkbox" name="algorithms" value="MKM" {% if 'MKM' in algorithms %}checked{% endif %}> MiniBatch KMeans<br>
+        <input type="checkbox" name="algorithms" value="AFP" {% if 'AFP' in algorithms %}checked{% endif %}> Affinity Propagation<br>
+        <input type="checkbox" name="algorithms" value="MSH" {% if 'MSH' in algorithms %}checked{% endif %}> MeanShift<br>
+        <input type="checkbox" name="algorithms" value="SPC" {% if 'SPC' in algorithms %}checked{% endif %}> Spectral Clustering<br>
+        <input type="checkbox" name="algorithms" value="WRD" {% if 'WRD' in algorithms %}checked{% endif %}> Ward<br>
+        <input type="checkbox" name="algorithms" value="AGC" {% if 'AGC' in algorithms %}checked{% endif %}> Agglomerative Clustering<br>
+        <input type="checkbox" name="algorithms" value="DBS" {% if 'DBS' in algorithms %}checked{% endif %}> DBSCAN<br>
+        <input type="checkbox" name="algorithms" value="OPT" {% if 'OPT' in algorithms %}checked{% endif %}> OPTICS<br>
+        <input type="checkbox" name="algorithms" value="BRC" {% if 'BRC' in algorithms %}checked{% endif %}> Birch<br>
+        <input type="checkbox" name="algorithms" value="GMX" {% if 'GMX' in algorithms %}checked{% endif %}> Gaussian Mixture<br>
+      </div>
+    </div>
 
-  <label for="min_cluster_size">Min Cluster Size (0.01–0.5):</label>
-  <input type="text" name="min_cluster_size" value="0.1" required>
+    <div class="form-actions" style="flex: 1 1 100%;">
+      <button type="submit">Run Analysis</button>
+    </div>
+  </form>
 
-  <label for="min_cluster_size_increment">Cluster Size Increment:</label>
-  <input type="text" name="min_cluster_size_increment" value="0.02">
-
-  <label for="min_cluster_iterations">Cluster Iterations:</label>
-  <input type="number" name="min_cluster_iterations" value="2">
-
-  <label for="algorithms">Algorithms:</label><br>
-  <input type="checkbox" name="algorithms" value="MKM" checked> MiniBatch KMeans<br>
-  <input type="checkbox" name="algorithms" value="AFP"> Affinity Propagation<br>
-  <input type="checkbox" name="algorithms" value="MSH"> MeanShift<br>
-  <input type="checkbox" name="algorithms" value="SPC"> Spectral Clustering<br>
-  <input type="checkbox" name="algorithms" value="WRD"> Ward<br>
-  <input type="checkbox" name="algorithms" value="AGC"> Agglomerative Clustering<br>
-  <input type="checkbox" name="algorithms" value="DBS"> DBSCAN<br>
-  <input type="checkbox" name="algorithms" value="OPT"> OPTICS<br>
-  <input type="checkbox" name="algorithms" value="BRC"> Birch<br>
-  <input type="checkbox" name="algorithms" value="GMX"> Gaussian Mixture<br>
-  <br>
-  <button type="submit">Run Analysis</button>
-</form>
-
-{% if img_url %}
-  <h3>Clustering Output</h3>
-  <img src="{{  url_for('static', filename=img_path) }}" width="800" style="border:1px solid #ccc; padding:5px;"><br><br>
-
-  <a href="{{ url_for('static', filename=img_path) }}" download class="btn btn-primary" target="_blank">📷 Download Image</a>
-  <a href="{{ url_for('static', filename=pdf_path) }}" download class="btn btn-success" target="_blank">📄 Download PDF</a>
-{% endif %}
-
-
-
-
-
-
- 
+  {% if img_url %}
+    <h3 style="text-align: center;">Clustering Output</h3>
+    <img class="analysis-image" src="{{ url_for('static', filename=img_path) }}" width="800" alt="Cluster Output">
+    <div class="download-buttons">
+      <a href="{{ url_for('static', filename=img_path) }}" download target="_blank">📷 Download Image</a>
+      <a href="{{ url_for('static', filename=pdf_path) }}" download target="_blank">📄 Download PDF</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,47 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% block content %}
+<div class="main-content font-[Times New Roman]">
+  <div class="container py-4 px-5">
+    <h2 class="text-2xl font-bold text-center mb-6">Change Profile Photo</h2>
+
+    <div class="bg-white rounded-2xl shadow p-6 max-w-xl mx-auto text-center">
+      <form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data">
+        <label for="profile_photo" class="block text-lg font-medium mb-2">Choose a new profile photo:</label>
+        <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required class="mb-4 block mx-auto">
+
+        <button type="submit" class="btn-blue">Upload</button>
+      </form>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mt-4">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+</div>
+
 <style>
+.btn-blue {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #2563eb;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+.btn-blue:hover {
+  background-color: #1e40af;
+}
 .alert-success {
-    color: white;
-    background-color: green;
-    padding: 10px;
-    margin: 10px;
-    border-radius: 5px;
+  color: white;
+  background-color: green;
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 5px;
 }
 .alert-danger {
-    color: white;
-    background-color: red;
-    padding: 10px;
-    margin: 10px;
-    border-radius: 5px;
+  color: white;
+  background-color: red;
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 5px;
+}
+.main-content {
+  margin-left: 120px;
+  margin-top: 60px;
+  padding: 20px 30px;
+  font-family: 'Times New Roman', Times, serif;
+  min-height: calc(100vh - 60px);
+  box-sizing: border-box;
+  text-align: center;
 }
 </style>
-
-<head>
-    <meta charset="UTF-8">
-    <title>Edit Profile Photo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-
-<h1>Edit Profile Photo</h1>
-
-<form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data">
-    <label for="profile_photo">Choose a new profile photo:</label><br><br>
-    <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required><br><br>
-    <button type="submit">Upload</button>
-</form>
-
-<br>
-<a href="{{ url_for('profile') }}">Back to Profile</a>
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div class="flash-messages">
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">{{ message }}</div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
-</body>
-</html>
+{% endblock %}

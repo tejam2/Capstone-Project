@@ -1,107 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>GCInsights V2.0 - Visualizations</title>
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #e0f7fa, #80cbc4);
-      color: #004d40;
-    }
-    .navbar {
-      position: sticky;
-      top: 0;
-      background-color: #004d40;
-      color: white;
-      padding: 15px 20px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-      z-index: 1000;
-    }
-    .container {
-      padding: 40px;
-    }
-    .plot-section {
-      background: white;
-      margin: 30px 0;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .plot-section img {
-      max-width: 100%;
-      border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .plot-section h3 {
-      margin-top: 0;
-    }
-    .download-btn {
-      margin-top: 10px;
-      display: inline-block;
-      padding: 8px 16px;
-      background-color: #00796b;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      transition: background 0.3s ease;
-    }
-    .download-btn:hover {
-      background-color: #004d40;
-    }
-  </style>
-</head>
-<body>
-  <div class="navbar">
-    GCInsights V2.0 - Visualizations
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h2 class="text-2xl font-bold text-center mb-6" style="text-align:center">Visualizations</h2>
+
+  
+  <div class="plot-section">
+    <h3>Gene Expression Distribution - Full Dataset</h3>
+    <img src="{{ url_for('static', filename='images/v1.png') }}" alt="Histogram All">
+    <p>This histogram shows gene expression distribution across all stages (E18 to P9) using full dataset.</p>
+    <a href="{{ url_for('static', filename='pdfs/v1.pdf') }}" download class="download-btn" download>Download PDF</a>
   </div>
 
-  <div class="container">
-    <div class="plot-section">
-      <h3>Gene Expression Distribution - Full Dataset</h3>
-      <img src="{{ url_for('static', filename='images/v1.png') }}" alt="Histogram All">
-      <p>This histogram shows gene expression distribution across all stages (E18 to P9) using full dataset.</p>
-      <a href="{{ url_for('static', filename='pdfs/v1.pdf') }}" download class="download-btn" download>Download PDF</a>
-    </div>
-
-    <div class="plot-section">
-      <h3>Pairwise Comparison - Full Dataset</h3>
-      <img src="{{ url_for('static', filename='images/v2.png') }}" alt="Pairplot Full">
-      <p>Pairplot with scatter plots and histograms showing relationships between developmental stages.</p>
-      <a href="{{ url_for('static', filename='pdfs/v2.pdf') }}" download class="download-btn" download>Download PDF</a>
-    </div>
-
-    <div class="plot-section">
-      <h3>Gene Expression Distribution - Top 20 Genes</h3>
-      <img src="{{ url_for('static', filename='images/v3.png') }}" alt="Top 20 Histogram">
-      <p>This visualization focuses on the expression of top 20 genes across different developmental stages.</p>
-      <a href="{{ url_for('static', filename='pdfs/v3.pdf') }}" download class="download-btn" download>Download PDF</a>
-    </div>
-
-    <div class="plot-section">
-      <h3>Pairwise Comparison - Top 20 Genes</h3>
-      <img src="{{ url_for('static', filename='images/v4.png') }}" alt="Pairplot Top 20">
-      <p>Shows relationships between top 20 genes across stages using pairwise scatter plots.</p>
-      <a href="{{ url_for('static', filename='pdfs/v4.pdf') }}" download class="download-btn" download>Download PDF</a>
-    </div>
-
-    <div class="plot-section">
-      <h3>Parallel Coordinates - Top Genes</h3>
-      <img src="{{ url_for('static', filename='images/v5.png') }}" alt="Parallel Coordinates">
-      <p>Parallel coordinates plot visualizing expression patterns for selected genes across time points.</p>
-      <a href="{{ url_for('static', filename='pdfs/v5.pdf') }}" download class="download-btn" download>Download PDF</a>
-    </div>
-
-    <div class="plot-section">
-      <h3>Line Plot - All Genes Expression</h3>
-      <img src="{{ url_for('static', filename='images/v6.png') }}" alt="Line Plot Genes">
-      <p>Line plot showing expression trend of all genes across multiple developmental stages.</p>
-      <a href="{{ url_for('static', filename='pdfs/v6.pdf') }}" download class="download-btn" download>Download PDF</a>
-    </div>
+  <div class="plot-section">
+    <h3>Pairwise Comparison - Full Dataset</h3>
+    <img src="{{ url_for('static', filename='images/v2.png') }}" alt="Pairplot Full">
+    <p>Pairplot with scatter plots and histograms showing relationships between developmental stages.</p>
+    <a href="{{ url_for('static', filename='pdfs/v2.pdf') }}" download class="download-btn" download>Download PDF</a>
   </div>
-</body>
-</html>""
+
+  <div class="plot-section">
+    <h3>Gene Expression Distribution - Top 20 Genes</h3>
+    <img src="{{ url_for('static', filename='images/v3.png') }}" alt="Top 20 Histogram">
+    <p>This visualization focuses on the expression of top 20 genes across different developmental stages.</p>
+    <a href="{{ url_for('static', filename='pdfs/v3.pdf') }}" download class="download-btn" download>Download PDF</a>
+  </div>
+
+  <div class="plot-section">
+    <h3>Pairwise Comparison - Top 20 Genes</h3>
+    <img src="{{ url_for('static', filename='images/v4.png') }}" alt="Pairplot Top 20">
+    <p>Shows relationships between top 20 genes across stages using pairwise scatter plots.</p>
+    <a href="{{ url_for('static', filename='pdfs/v4.pdf') }}" download class="download-btn" download>Download PDF</a>
+  </div>
+
+  <div class="plot-section">
+    <h3>Parallel Coordinates - Top Genes</h3>
+    <img src="{{ url_for('static', filename='images/v5.png') }}" alt="Parallel Coordinates">
+    <p>Parallel coordinates plot visualizing expression patterns for selected genes across time points.</p>
+    <a href="{{ url_for('static', filename='pdfs/v5.pdf') }}" download class="download-btn" download>Download PDF</a>
+  </div>
+
+  <div class="plot-section">
+    <h3>Line Plot - All Genes Expression</h3>
+    <img src="{{ url_for('static', filename='images/v6.png') }}" alt="Line Plot Genes">
+    <p>Line plot showing expression trend of all genes across multiple developmental stages.</p>
+    <a href="{{ url_for('static', filename='pdfs/v6.pdf') }}" download class="download-btn" download>Download PDF</a>
+  </div>
+  
+</div>
+
+<style>
+
+.plot-section {
+  background: white;
+  margin: 30px 0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.plot-section img {
+  max-width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.plot-section h3 {
+  margin-top: 0;
+}
+.download-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #00796b;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+.container {
+  margin-left: 250px;  
+  margin-top: 40px;    
+  padding: 30px 40px;  
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.download-btn:hover {
+  background-color: #004d40;
+}
+</style>
+{% endblock %}

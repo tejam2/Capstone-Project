@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}GCInsights{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Times New Roman', serif;
+      background: #f4f8fc;
+      color: #1a1a1a;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background: #1e1e1e;
+      color: #f0f0f0;
+    }
+
+    .sidebar .app-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a:not(.app-title) {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 15px 25px;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .sidebar {
+      width: 220px;
+      height: 100vh;
+      background-color: #1e1e1e;
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+      color: white;
+    }
+    .sidebar .app-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a img {
+      height: 22px;
+      margin-right: 10px;
+      margin-left: 10px;
+    }
+    .sidebar a:hover {
+      background-color: #333;
+    }
+    .sidebar .theme-container {
+      margin-top: auto;
+      margin-bottom: 80px;
+      width: 80%;
+      text-align: center;
+    }
+    .theme-toggle {
+      width: 100%;
+      background: #333;
+      border: 1px solid white;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 220px;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      background-color: #1e1e1e;
+      padding: 10px 30px;
+      height: 60px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      color: white;
+    }
+    .navbar .right-block {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .profile {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    .profile span {
+      margin-right: 12px;
+      font-weight: bold;
+    }
+    .profile img {
+      height: 38px;
+      width: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 55px;
+      right: 0;
+      background: #1e1e1e;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 200;
+    }
+    .dropdown a {
+      display: block;
+      padding: 12px 20px;
+      text-decoration: none;
+      color: #fff;
+      font-size: 14px;
+      border-bottom: 1px solid #333;
+    }
+    .dropdown a:hover {
+      background-color: #333;
+    }
+    .dropdown.show {
+      display: block !important;
+    }
+
+    }
+    .main-content {
+      margin-left: 220px;  
+      margin-top: 60px;    
+      padding: 30px 40px;  
+      min-height: calc(100vh - 60px);
+      box-sizing: border-box;
+    }
+.app-title-wrapper {
+  margin-top: 15px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+}
+
+.app-title-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.app-title {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 22px;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.app-title:hover {
+  color: white;
+  text-decoration: none;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="app-title-wrapper">
+      <a href="{{ url_for('home') }}" class="app-title">GCInsights</a>
+    </div>
+    <a href="{{ url_for('home') }}"><img src="{{ url_for('static', filename='images/home-icon.png') }}">Home</a>
+    <a href="{{ url_for('interactive_query') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/query-icon.png') }}" alt="Interactive Query">
+      <span>Interactive Query</span>
+    </a>
+    <a href="{{ url_for('visualizations') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/visual-icon.png') }}" alt="Visualizations">
+      <span>Visualizations</span>
+    </a>
+    <a href="{{ url_for('advanced_analysis') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/analysis-icon.png') }}" alt="Advanced Analysis">
+      <span>Advanced Analysis</span>
+    </a>
+    <a href="{{ url_for('deep_ml') }}" class="sidebar-item">
+      <img src="{{ url_for('static', filename='images/ml-icon.png') }}" alt="Deep ML">
+      <span>Deep ML</span>
+    </a>
+    <a href="{{ url_for('about') }}" class="sidebar-item"><img src="{{ url_for('static', filename='images/info-icon.png') }}">About</a>
+    <div class="theme-container">
+      <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+    </div>
+  </div>
+
+  <div class="navbar">
+    <div class="right-block">
+      <div class="profile">
+        <span>{{ current_user.username }}</span>
+        <img src="{{ url_for('static', filename='profile_photos/' + (current_user.profile_photo or 'default.png')) }}" alt="Profile">
+        <div class="dropdown">
+          <a href="{{ url_for('profile') }}">User Profile</a>
+          <a href="{{ url_for('change_password') }}">Change Password</a>
+          <a href="{{ url_for('download_history') }}">History</a>
+          <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+  </script>
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const profileImage = document.querySelector(".profile img");
+      const dropdown = document.querySelector(".dropdown");
+
+      if (profileImage && dropdown) {
+        profileImage.addEventListener("click", function (e) {
+          e.stopPropagation(); // Prevent clicks from closing immediately
+          dropdown.classList.toggle("show");
+        });
+
+      // Hide dropdown when clicking outside
+        document.addEventListener("click", function () {
+          dropdown.classList.remove("show");
+        });
+
+        dropdown.addEventListener("click", function (e) {
+          e.stopPropagation(); // Prevent dropdown from closing when clicked inside
+        });
+      }
+    });
+  </script>
+
+
+</body>
+</html>

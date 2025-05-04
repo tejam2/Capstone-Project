@@ -1,78 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Deep ML Analysis</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <style>
-    body { padding: 40px; background-color: #f9f9f9; font-family: 'Segoe UI', sans-serif; }
-    .form-container { background: white; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
-    .btn-submit { padding: 10px 20px; background-color: #003e46; color: white; border: none; cursor: pointer; border-radius: 5px; }
-    .btn-submit:hover { background-color: #005662; }
-    select, label { display: block; margin-bottom: 10px; width: 100%; padding: 8px; }
-    img { max-width: 80%; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);}
-    h2, h3 { color: #003e46; }
-  </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Times New Roman', serif;
+  }
+  .form-check {
+    margin-bottom: 8px;
+  }
+  .form-check-label {
+    font-size: 14px;
+  }
+  .btn-primary {
+    margin-top: 15px;
+    font-family: 'Times New Roman', serif;
+  }
+  .results-container {
+    margin-top: 40px;
+    font-family: 'Times New Roman', serif;
+    text-align: center;
+  }
+  .img-fluid {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+  }
 
-<div class="form-container">
-  <h2>Deep ML Analysis</h2>
-  <form action="{{ url_for('deep_ml') }}" method="POST">
-    <label for="dataset">Select Dataset:</label>
-    <select name="dataset" id="dataset" required>
-      <option value="">-- Select a CSV File --</option>
-      <option value="GCM_GeneNames_Normalized.csv">GCM Proteins</option>
-      <option value="GCP_GeneNames_Normalized.csv">GCP Proteins</option>
-      <option value="GCM_LipidClass_Normalized.csv">GCM Lipids</option>
-      <option value="GCP_LipidClass_Normalized.csv">GCP Lipids</option>
-    </select>
-
-    <label for="model_choice">Select Model:</label>
-    <select name="model_choice" id="model_choice" required>
-      <option value="1">Logistic Regression</option>
-      <option value="2">Random Forest</option>
-      <option value="3">Both</option>
-    </select>
-
-    <button type="submit" class="btn-submit">Run Deep ML 🚀</button>
+  .main-content {
+    margin-left: 120px;  
+    margin-top: 30px;    
+    padding: 30px 40px;  
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
+  }
+.download-button {
+  display: inline-block;
+  background-color: #267DF4;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-family: 'Times New Roman', serif;
+  width: auto;
+  margin: 10px auto 0;
+  text-align: center;
+}
+</style>
+<div class="main-content">
+  <h2 style="text-align: center;">Deep ML Analysis</h2>
+  <form method="POST" enctype="multipart/form-data" class="form-container" onsubmit="return validateSelection()">
+    <label class="form-label">Select Any Two Datasets:</label>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="datasets" value="GCM_GeneNames_Normalized.csv" id="gcm_protein" {% if 'GCM_GeneNames_Normalized.csv' in datasets %}checked{% endif %}>
+      <label class="form-check-label" for="gcm_protein">GCM Protein</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="datasets" value="GCP_GeneNames_Normalized.csv" id="gcp_protein" {% if 'GCP_GeneNames_Normalized.csv' in datasets %}checked{% endif %}>
+      <label class="form-check-label" for="gcp_protein">GCP Protein</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="datasets" value="GCM_LipidClass_Normalized.csv" id="gcm_lipid" {% if 'GCM_LipidClass_Normalized.csv' in datasets %}checked{% endif %}>
+      <label class="form-check-label" for="gcm_lipid">GCM Lipid</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="datasets" value="GCP_LipidClass_Normalized.csv" id="gcp_lipid" {% if 'GCP_LipidClass_Normalized.csv' in datasets %}checked{% endif %}>
+      <label class="form-check-label" for="gcp_lipid">GCP Lipid</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Run Analysis</button>
   </form>
+
+  <script>
+    function validateSelection() {
+      const checked = document.querySelectorAll('input[name="datasets"]:checked');
+      if (checked.length !== 2) {
+        alert("Please select exactly two datasets.");
+        return false;
+      }
+      return true;
+    }
+  </script>
+
+  {% if results %}
+  <div class="results-container">
+    <hr>
+    <h4>Model Evaluation Results</h4>
+    {% if results.accuracy_lr %}<p><strong>Logistic Regression Accuracy:</strong> {{ results.accuracy_lr }}%</p>{% endif %}
+    {% if results.accuracy_rf %}<p><strong>Random Forest Accuracy:</strong> {{ results.accuracy_rf }}%</p>{% endif %}
+    {% if results.top_features %}
+      <h5>Top Features (Random Forest)</h5>
+      <ul style="list-style: none; padding: 0;">
+        {% for feature, score in results.top_features %}
+          <li>{{ feature }} — {{ score | round(4) }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <hr class="my-4">
+    <h5>Confusion Matrix</h5>
+    <img src="{{ results.cm_path }}" class="img-fluid">
+    <h5>Classification Report</h5>
+    <pre style="background:#f8f9fa;padding:1rem;border-radius:8px; text-align:left; display:inline-block;">{{ results.classification_report }}</pre>
+    <hr class="my-4">
+    <h5>PCA Projection: {{ results.labels[0] }} vs {{ results.labels[1] }}</h5>
+    <img src="{{ results.pca_path }}" class="img-fluid">
+    <h5>t-SNE Projection: {{ results.labels[0] }} vs {{ results.labels[1] }}</h5>
+    <img src="{{ results.tsne_path }}" class="img-fluid">
+    <div style="display: flex; justify-content: center;">
+      <a class="download-button" href="{{ results.pdf_path }}" download>📄 Download Report (PDF)</a>
+    </div>
+
+  </div>
+  {% endif %}
 </div>
-
-{% if results %}
-<div style="margin-top: 40px; text-align: center;">
-
-  {% if results.pca_path %}
-    <img src="{{ results.pca_path }}" alt="PCA Projection">
-  {% endif %}
-
-  {% if results.tsne_path %}
-    <img src="{{ results.tsne_path }}" alt="t-SNE Projection">
-  {% endif %}
-
-  {% if results.umap_path %}
-    <img src="{{ results.umap_path }}" alt="UMAP Projection">
-  {% endif %}
-
-  {% if results.accuracy_lr %}
-    <h2>Logistic Regression Accuracy: {{ results.accuracy_lr }}%</h2>
-  {% endif %}
-
-  {% if results.accuracy_rf %}
-    <h2>Random Forest Accuracy: {{ results.accuracy_rf }}%</h2>
-  {% endif %}
-
-  {% if results.top_features %}
-    <h3>Top Important Features (Random Forest):</h3>
-    <ul style="list-style-type: none; padding: 0;">
-      {% for feature, score in results.top_features %}
-        <li><b>{{ feature }}</b> — Importance: {{ score }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
-</div>
-{% endif %}
-
-</body>
-</html>
+{% endblock %}

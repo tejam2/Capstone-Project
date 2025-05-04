@@ -1,127 +1,152 @@
-# deepml_util.py
-
+import os
 import pandas as pd
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import os
-import umap.umap_ as umap
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
-from uuid import uuid4
-import warnings
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from fpdf import FPDF
 
-warnings.filterwarnings('ignore')
 
-def run_deepml_pipeline(file_path, model_choice):
-    df = pd.read_csv(file_path, skiprows=2)
-    df = df.set_index(df.columns[0])
-    X = df.values.T
-    feature_names = df.index.tolist()
+def preprocess_dataset(file_path, label, is_protein=True):
+    if is_protein:
+        names = ["Gene","E18_1","E18_2","E18_3","E18_4","E18_5", "P0_1","P0_2","P0_3","P0_4","P0_5","P0_6",
+                 "P3_1","P3_2","P3_3","P3_4","P3_5","P3_6","P6_1","P6_2","P6_3","P6_4","P6_5","P6_6",
+                 "P9_1","P9_2","P9_3","P9_4","P9_5","P9_6"]
+    else:
+        names = ["Gene","E18_1","E18_2","E18_3","E18_4","E18_5","E18_6", "P0_1","P0_2","P0_3","P0_4","P0_5","P0_6",
+                 "P3_1","P3_2","P3_3","P3_4","P3_5","P3_6","P6_1","P6_2","P6_3","P6_4","P6_5","P6_6",
+                 "P9_1","P9_2","P9_3","P9_4","P9_5","P9_6"]
+
+    df = pd.read_csv(file_path, names=names, skiprows=2)
+    df['E18'] = df.loc[:, "E18_1":"E18_6" if not is_protein else "E18_5"].mean(axis=1)
+    df['P0'] = df.loc[:, "P0_1":"P0_6"].mean(axis=1)
+    df['P3'] = df.loc[:, "P3_1":"P3_6"].mean(axis=1)
+    df['P6'] = df.loc[:, "P6_1":"P6_6"].mean(axis=1)
+    df['P9'] = df.loc[:, "P9_1":"P9_6"].mean(axis=1)
+    df = df[["Gene", "E18", "P0", "P3", "P6", "P9"]].dropna()
+    df["Label"] = label
+    return df
+
+
+def run_combined_deepml_analysis(file_path1, file_path2):
+    def label_name(file):
+        if "GCM_GeneNames" in file:
+            return "GCM Protein"
+        elif "GCP_GeneNames" in file:
+            return "GCP Protein"
+        elif "GCM_LipidClass" in file:
+            return "GCM Lipid"
+        elif "GCP_LipidClass" in file:
+            return "GCP Lipid"
+        else:
+            return "Dataset"
+
+    label1 = label_name(file_path1)
+    label2 = label_name(file_path2)
+
+    df1 = preprocess_dataset(file_path1, label=label1, is_protein="Protein" in label1)
+    df2 = preprocess_dataset(file_path2, label=label2, is_protein="Protein" in label2)
+    df_combined = pd.concat([df1, df2], ignore_index=True)
+
+    X = df_combined.drop(columns=["Gene", "Label"])
+    y = df_combined["Label"]
 
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    labels = []
-    for col in df.columns:
-        parts = col.split('_')
-        if len(parts) >= 2:
-            labels.append(parts[1])
-        else:
-            labels.append('Unknown')
-    le = LabelEncoder()
-    y = le.fit_transform(labels)
+    pca_proj = PCA(n_components=2).fit_transform(X_scaled)
+    tsne_proj = TSNE(n_components=2, perplexity=30, random_state=42, max_iter=500).fit_transform(X_scaled)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+    output_dir = "app/static/results"
+    os.makedirs(output_dir, exist_ok=True)
 
-    results_folder = os.path.join("app", "static", "results")
-    os.makedirs(results_folder, exist_ok=True)
+    pca_path = os.path.join(output_dir, "pca_plot.png")
+    tsne_path = os.path.join(output_dir, "tsne_plot.png")
 
-    # PCA
-    fig, ax = plt.subplots()
-    pca = PCA(n_components=2)
-    X_pca = pca.fit_transform(X_scaled)
-    scatter = ax.scatter(X_pca[:,0], X_pca[:,1], c=y, cmap='tab10')
-    plt.colorbar(scatter)
-    plt.title("PCA Projection")
-    pca_path = os.path.join(results_folder, f"pca_{uuid4().hex}.png")
+    plt.figure()
+    sns.scatterplot(x=pca_proj[:, 0], y=pca_proj[:, 1], hue=y, palette="Set2")
+    plt.title(f"PCA: {label1} vs {label2}")
     plt.savefig(pca_path)
     plt.close()
 
-    # t-SNE
-    fig, ax = plt.subplots()
-    tsne = TSNE(n_components=2, perplexity=5, random_state=42)
-    X_tsne = tsne.fit_transform(X_scaled)
-    scatter = ax.scatter(X_tsne[:,0], X_tsne[:,1], c=y, cmap='tab10')
-    plt.colorbar(scatter)
-    plt.title("t-SNE Projection")
-    tsne_path = os.path.join(results_folder, f"tsne_{uuid4().hex}.png")
+    plt.figure()
+    sns.scatterplot(x=tsne_proj[:, 0], y=tsne_proj[:, 1], hue=y, palette="Set2")
+    plt.title(f"t-SNE: {label1} vs {label2}")
     plt.savefig(tsne_path)
     plt.close()
 
-    # UMAP
-    fig, ax = plt.subplots()
-    reducer = umap.UMAP(random_state=42)
-    X_umap = reducer.fit_transform(X_scaled)
-    scatter = ax.scatter(X_umap[:,0], X_umap[:,1], c=y, cmap='tab10')
-    plt.colorbar(scatter)
-    plt.title("UMAP Projection")
-    umap_path = os.path.join(results_folder, f"umap_{uuid4().hex}.png")
-    plt.savefig(umap_path)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
+
+    lr = LogisticRegression(max_iter=500)
+    lr.fit(X_train, y_train)
+    acc_lr = accuracy_score(y_test, lr.predict(X_test))
+
+    rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf.fit(X_train, y_train)
+    acc_rf = accuracy_score(y_test, rf.predict(X_test))
+
+    importance = rf.feature_importances_
+    top_features = sorted(zip(X.columns, importance), key=lambda x: x[1], reverse=True)[:5]
+
+    from sklearn.metrics import classification_report, confusion_matrix
+
+    # Random Forest predictions
+    y_pred = rf.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred)
+    report_text = classification_report(y_test, y_pred, target_names=[label1, label2])
+
+    # Save heatmap
+    cm_path = os.path.join(output_dir, "confusion_matrix.png")
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=[label1, label2],     yticklabels=[label1, label2])
+    plt.title("Confusion Matrix")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.tight_layout()
+    plt.savefig(cm_path)
     plt.close()
 
-    accuracy_lr = None
-    accuracy_rf = None
-    top_features = None
-    confusion_path = None
 
-    # Model Training
-    if len(np.unique(y_train)) >= 2:
-        if model_choice in ["1", "3"]:
-            model_lr = LogisticRegression(max_iter=500)
-            model_lr.fit(X_train, y_train)
-            y_pred_lr = model_lr.predict(X_test)
-            accuracy_lr = round(accuracy_score(y_test, y_pred_lr) * 100, 2)
+    pdf_path = os.path.join(output_dir, "deepml_report.pdf")
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Deep ML Report", ln=True, align='C')
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=f"Logistic Regression Accuracy: {round(acc_lr * 100, 2)}%", ln=True)
+    pdf.cell(200, 10, txt=f"Random Forest Accuracy: {round(acc_rf * 100, 2)}%", ln=True)
+    pdf.ln(5)
+    pdf.cell(200, 10, txt="Top 5 Features (Random Forest):", ln=True)
+    for feat, val in top_features:
+        pdf.cell(200, 10, txt=f"{feat}: {round(val, 4)}", ln=True)
 
-        if model_choice in ["2", "3"]:
-            model_rf = RandomForestClassifier(n_estimators=100, random_state=42)
-            model_rf.fit(X_train, y_train)
-            y_pred_rf = model_rf.predict(X_test)
-            accuracy_rf = round(accuracy_score(y_test, y_pred_rf) * 100, 2)
+    pdf.image(pca_path, x=10, y=pdf.get_y() + 10, w=90)
+    pdf.ln(70)
+    pdf.image(tsne_path, x=10, y=pdf.get_y() + 10, w=90)
+    pdf.add_page()
+    pdf.cell(200, 10, txt="Classification Report (Random Forest):", ln=True)
+    for line in report_text.splitlines():
+        pdf.cell(200, 10, txt=line.strip(), ln=True)
 
-            feature_importance = model_rf.feature_importances_
-            idx = np.argsort(feature_importance)[-10:]
-            top_features = [(feature_names[i], round(feature_importance[i], 4)) for i in idx]
+    pdf.image(cm_path, x=10, y=pdf.get_y() + 10, w=100)
 
-            fig, ax = plt.subplots(figsize=(8,8))
-            cm = confusion_matrix(y_test, y_pred_rf)
-            disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-            disp.plot(ax=ax, cmap='Blues')
-            confusion_path = os.path.join(results_folder, f"confusion_{uuid4().hex}.png")
-            plt.savefig(confusion_path)
-            plt.close()
-    else:
-        print("\n❌ Not enough classes to train a classifier. Only one class found.")
 
-    # Now safe replace
-    pca_path = pca_path.replace("app\\static\\", "/static/").replace("app/static/", "/static/")
-    tsne_path = tsne_path.replace("app\\static\\", "/static/").replace("app/static/", "/static/")
-    umap_path = umap_path.replace("app\\static\\", "/static/").replace("app/static/", "/static/")
-    if confusion_path:
-        confusion_path = confusion_path.replace("app\\static\\", "/static/").replace("app/static/", "/static/")
+    pdf.output(pdf_path)
 
     return {
-        "pca_path": pca_path,
-        "tsne_path": tsne_path,
-        "umap_path": umap_path,
-        "accuracy_lr": accuracy_lr,
-        "accuracy_rf": accuracy_rf,
+        "accuracy_lr": round(acc_lr * 100, 2),
+        "accuracy_rf": round(acc_rf * 100, 2),
         "top_features": top_features,
-        "confusion_path": confusion_path
+        "pca_path": "/static/results/pca_plot.png",
+        "tsne_path": "/static/results/tsne_plot.png",
+        "cm_path": "/static/results/confusion_matrix.png",
+        "classification_report": report_text,
+        "pdf_path": "/static/results/deepml_report.pdf",
+        "labels": [label1, label2]
     }

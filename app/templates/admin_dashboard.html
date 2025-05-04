@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+
+  <meta charset="UTF-8">
+  <title>GCInsights Admin Dashboard</title>
+  <style>
+    .dashboard-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      overflow-x: auto;
+      font-family: 'Times New Roman', Times, serif;
+      box-sizing: border-box;
+      margin-left: 240px;
+      margin-top: 60px;
+      background-color: #e5edf1;
+      padding: 20px 30px;
+      text-align: center;
+      min-height: calc(100vh - 60px);
+     }
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      overflow: hidden;
+      border-radius: 12px; /* Rounded table edges */
+    }
+
+    th, td {
+      text-align: center;
+      padding: 12px 14px;
+      background-color: white;
+      border-bottom: 1px solid #ddd; /* row divider */
+      border-right: 1px solid #ddd;  /* column divider */
+      word-wrap: break-word;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: #f7f7f7;
+      font-weight: bold;
+    }
+
+    tr:last-child td {
+      border-bottom: none; /* Remove last row's bottom line */
+    }
+
+    tr td:last-child, th:last-child {
+      border-right: none; /* Remove last column's right line */
+    }
+
+    tr:hover td {
+      background-color: #f0f0f0;
+    }
+  </style>
+
+
+
+  <div class="dashboard-container">
+    <h1>🛠 GCInsights Admin Dashboard</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Username</th>
+          <th>Role</th>
+          <th>City</th>
+          <th>State</th>
+          <th>Country</th>
+          <th>Interactive Queries</th>
+          <th>Advanced Analysis</th>
+          <th>Deep ML Runs</th>
+          <th>Total Downloads</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ stats[user.id].email }}</td>
+          <td>{{ stats[user.id].username }}</td>
+          <td>{{ stats[user.id].role }}</td>
+          <td>{{ stats[user.id].city }}</td>
+          <td>{{ stats[user.id].state }}</td>
+          <td>{{ stats[user.id].country }}</td>
+          <td>{{ stats[user.id].interactive }}</td>
+          <td>{{ stats[user.id].advanced }}</td>
+          <td>{{ stats[user.id].deepml }}</td>
+          <td>{{ stats[user.id].downloads }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+{% endblock %}

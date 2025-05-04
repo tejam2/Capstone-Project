@@ -1,72 +1,236 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>GCInsights - Interactive Query</title>
-    <link rel="stylesheet" href="/static/styles.css">
-</head>
-<body>
-    <h1>GCInsights - Interactive Query</h1>
+{% extends 'base.html' %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<style>
+  body {
+    font-family: 'Times New Roman', serif;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  .form-group {
+    width: 60%;
+    text-align: left;
+  }
+  label {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  select, input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px 30px;
+    font-size: 14px;
+    width: 60%;
+  }
+  .checkbox-group label {
+    display: flex;
+    align-items: center;
+    min-width: 150px;
+  }
+  button {
+    padding: 10px 18px;
+    background-color: #267DF4;
+    color: white;
+    font-family: 'Times New Roman', serif;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .result-section {
+    text-align: center;
+  }
+  .result-section img {
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.2);
+  }
+  .download-buttons {
+    text-align: center;
+    margin-top: 20px;
+  }
 
-    <form method="POST" action="/interactive-query">
-        <label>Omics Layer:</label>
-        <select name="omic" required>
-            <option value="protein">Protein</option>
-            <option value="lipid">Lipid</option>
-        </select><br><br>
+  .main-content {
+    margin-left: 120px;  
+    margin-top: 30px;    
+    padding: 30px 40px;  
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
+  }
+  .download-buttons a {
+    display: inline-block;
+    padding: 10px 18px;
+    margin: 8px;
+    background-color: #267DF4;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-family: 'Times New Roman', serif;
+    border-radius: 6px;
+  }
+</style>
 
-        <label>Fraction:</label>
-        <select name="fraction" required>
-            <option value="gcm">GCM</option>
-            <option value="gcp">GCP</option>
-        </select><br><br>
+<div class="main-content">
+  <h2 style="text-align:center">Interactive Query</h2>
+  <form method="POST" action="/interactive-query">
+    <div class="form-group">
+      <label>Omics Layer:</label>
+      <select name="omic" id="omic" required onchange="updateGeneOptions()">
+        <option value="protein" {% if omic == 'protein' %}selected{% endif %}>Protein</option>
+        <option value="lipid" {% if omic == 'lipid' %}selected{% endif %}>Lipid</option>
+      </select>
+    </div>
 
-        <label>Developmental Stage:</label>
-        <select name="stage" required>
-            <option value="E18">E18</option>
-            <option value="P0">P0</option>
-            <option value="P3">P3</option>
-            <option value="P6">P6</option>
-            <option value="P9">P9</option>
-        </select><br><br>
+    <div class="form-group">
+      <label>Fraction:</label>
+      <select name="fraction" id="fraction" required onchange="updateGeneOptions()">
+        <option value="gcm" {% if fraction == 'gcm' %}selected{% endif %}>GCM</option>
+        <option value="gcp" {% if fraction == 'gcp' %}selected{% endif %}>GCP</option>
+      </select>
+    </div>
 
-        <label>Gene Names (space-separated):</label>
-        <input type="text" name="genes" required placeholder="e.g., Thy1 Lamp1"><br><br>
+    <div class="form-group">
+      <label>Developmental Stage:</label>
+      <select name="stage" required>
+        <option value="E18" {% if stage == 'E18' %}selected{% endif %}>E18</option>
+        <option value="P0" {% if stage == 'P0' %}selected{% endif %}>P0</option>
+        <option value="P3" {% if stage == 'P3' %}selected{% endif %}>P3</option>
+        <option value="P6" {% if stage == 'P6' %}selected{% endif %}>P6</option>
+        <option value="P9" {% if stage == 'P9' %}selected{% endif %}>P9</option>
+      </select>
+    </div>
 
-        <label>Select Graph Types:</label><br>
-        <input type="checkbox" name="graph_types" value="bar" checked> Bar<br>
-        <input type="checkbox" name="graph_types" value="line" checked> Line<br>
-        <input type="checkbox" name="graph_types" value="box"> Box Plot<br>
-        <input type="checkbox" name="graph_types" value="hist"> Histogram<br>
-        <input type="checkbox" name="graph_types" value="scatter"> Scatter Matrix<br>
-        <input type="checkbox" name="graph_types" value="3d"> 3D Bar<br><br>
+    <div class="form-group">
+      <label>Gene Names:</label>
+      <select id="gene-dropdown" name="genes[]" multiple required class="form-select">
+      </select>
 
-        <button type="submit">Generate Graphs</button>
-    </form>
+    </div>
 
-    {% if pdf_path %}
+
+    <div class="form-group">
+      <label>Select Graph Types:</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="graph_types" value="bar" {% if 'bar' in graph_types %}checked{% endif %}> Bar</label>
+        <label><input type="checkbox" name="graph_types" value="line" {% if 'line' in graph_types %}checked{% endif %}> Line</label>
+        <label><input type="checkbox" name="graph_types" value="box" {% if 'box' in graph_types %}checked{% endif %}> Box Plot</label>
+        <label><input type="checkbox" name="graph_types" value="hist" {% if 'hist' in graph_types %}checked{% endif %}> Histogram</label>
+        <label><input type="checkbox" name="graph_types" value="scatter" {% if 'scatter' in graph_types %}checked{% endif %}> Scatter Matrix</label>
+        <label><input type="checkbox" name="graph_types" value="3d" {% if '3d' in graph_types %}checked{% endif %}> 3D Bar</label>
+      </div>
+    </div>
+
+    <button type="submit">Generate Graphs</button>
+  </form>
+
+  {% if pdf_path %}
+  <div class="result-section">
     <hr>
     <h2>📥 Download Report</h2>
-    <a href="{{ pdf_path }}" download style="font-size: 16px;">Download PDF Report</a>
-
-    <h2>🖼️ Generated Graphs</h2>
-    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-        {% for img in image_paths %}
-        <div style="text-align: center;">
-            <img src="{{ img }}" alt="Graph Image" width="300" style="border: 1px solid #ccc; padding: 5px;"><br>
-            <a href="{{ img }}" download>Download</a>
-        </div>
-        {% endfor %}
+    <div class="download-buttons">
+      <a href="{{ pdf_path }}" download>📄 Download PDF Report</a>
     </div>
-    {% endif %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-         {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    <h2>🖼️ Generated Graphs</h2>
+    <div>
+      {% for img in image_paths %}
+      <div>
+        <img src="{{ img }}" alt="Graph Image" width="300">
+        <div class="download-buttons">
+          <a href="{{ img }}" download>📷 Download Image</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
 
-</body>
-</html>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const omicSelect = document.querySelector('#omic');
+  const fractionSelect = document.querySelector('#fraction');
+  const geneDropdown = document.querySelector('#gene-dropdown');
+
+  function updateGeneOptions() {
+    const omic = omicSelect.value;
+    const fraction = fractionSelect.value;
+
+    fetch("/get_gene_names", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ omics_layer: omic.charAt(0).toUpperCase() + omic.slice(1), fraction: fraction.toUpperCase() })
+    })
+    .then(response => response.json())
+    .then(data => {
+      geneDropdown.innerHTML = "";  // Clear previous options
+
+      if (data.genes && data.genes.length > 0) {
+        data.genes.forEach(function(gene) {
+          const option = document.createElement("option");
+          option.value = gene;
+          option.textContent = gene;
+          geneDropdown.appendChild(option);
+        });
+      } else {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No genes available";
+        geneDropdown.appendChild(option);
+      }
+    });
+  }
+
+  omicSelect.addEventListener("change", updateGeneOptions);
+  fractionSelect.addEventListener("change", updateGeneOptions);
+
+  updateGeneOptions();  // Populate on page load
+});
+</script>
+
+<!-- Enable Select2 -->
+<script>
+  $(document).ready(function() {
+    $('#gene-dropdown').select2({
+      placeholder: "Select Gene(s)",
+      allowClear: true
+    });
+  });
+
+  function updateGeneOptions() {
+    const omic = $("#omic").val();
+    const fraction = $("#fraction").val();
+    if (!omic || !fraction) return;
+
+    $.post("/get_gene_names", JSON.stringify({ omics_layer: omic.charAt(0).toUpperCase() + omic.slice(1), fraction: fraction.toUpperCase() }), function(data) {
+      const $dropdown = $("#gene-dropdown");
+      $dropdown.empty();
+      if (data.genes) {
+        for (let gene of data.genes) {
+          $dropdown.append(`<option value="${gene}">${gene}</option>`);
+        }
+      }
+    }, "json");
+  }
+</script>
+
+
+{% endblock %}

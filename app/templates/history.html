@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .history-container {
+    max-width: 1200px;
+    margin: 60px auto 30px 240px;
+    padding: 30px 40px;
+    background-color: #fdf8f2;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border-radius: 18px;
+    font-family: 'Times New Roman', Times, serif;
+    box-sizing: border-box;
+    margin-left: 240px;
+    margin-top: 80px;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 26px;
+    font-weight: bold;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 14px 12px;
+    background-color: white;
+    border-bottom: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    text-align: center;
+    font-size: 14px;
+    word-wrap: break-word;
+  }
+
+  th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr td:last-child, th:last-child {
+    border-right: none;
+  }
+
+  tr:hover td {
+    background-color: #f9f9f9;
+  }
+
+  .action-btn {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin: 2px;
+    color: white;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .download-btn {
+    background-color: #007bff;
+  }
+
+  .rerun-btn {
+    background-color: #007bff;
+  }
+
+  .delete-btn {
+    background-color: #dc3545;
+    border: none;
+    cursor: pointer;
+  }
+
+  .delete-btn:hover,
+  .download-btn:hover,
+  .rerun-btn:hover {
+    opacity: 0.9;
+  }
+
+</style>
+
+<div class="history-container">
+  <h2>📂 Download History</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Si No</th>
+        <th>File Name</th>
+        <th>Type</th>
+        <th>Date & Time</th>
+        <th>Run Again</th>
+        <th>Download</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in history %}
+      <tr>
+        <td>{{ loop.index }}.</td>
+        <td>{{ item.file_name }}</td>
+        <td>{{ item.download_type }}</td>
+        <td>{{ item.timestamp.strftime('%d/%m/%Y and  %I:%M %p') }}</td>
+        <td>
+          {% if item.parameters %}
+          <a href="{{ url_for('rerun_task', history_id=item.id) }}" class="action-btn rerun-btn">
+            <i class="fas fa-play"></i>
+          </a>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ item.file_url }}" class="action-btn download-btn" download>
+            <i class="fas fa-download"></i>
+          </a>
+        </td>
+        <td>
+          <form action="{{ url_for('delete_history_item', history_id=item.id) }}" method="post" style="display:inline;">
+            <button class="action-btn delete-btn" onclick="return confirm('Delete this file?');">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

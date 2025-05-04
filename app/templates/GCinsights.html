@@ -1,130 +1,178 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>GCInsights V2.0 – Home</title>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GCInsights – Healthcare Omics</title>
   <style>
+    :root {
+      --primary-color: #267DF4;
+      --background: #f4f8fc;
+      --text-dark: #1a1a1a;
+      --text-muted: #444;
+      --card-bg: #ffffff;
+    }
+
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom right, #5aa8b0, #276973);
-      color: #333;
+      font-family: 'Times New Roman', serif;
+      background: var(--background);
+      color: var(--text-dark);
     }
+
     header {
-      background-color: white;
-      padding: 20px 40px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px 60px;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
+
     header h1 {
-      font-family: 'Merriweather', serif;
-      color: #1890ff;
-      font-size: 26px;
+      color: var(--primary-color);
+      font-size: 28px;
     }
+
     nav a {
+      margin-left: 25px;
       text-decoration: none;
-      color: #1890ff;
+      color: var(--primary-color);
       font-weight: bold;
-      margin-left: 20px;
-    }
-    .hero {
-      padding: 60px 40px 30px;
-      text-align: center;
-    }
-    .hero h2 {
-      font-size: 30px;
-      font-family: 'Merriweather', serif;
-      margin-bottom: 15px;
-    }
-    .hero p {
-      max-width: 700px;
-      margin: 0 auto;
       font-size: 16px;
-      color: #f4f4f4;
     }
+
+    .hero {
+      text-align: center;
+      padding: 100px 20px 50px;
+      background: linear-gradient(to right, #dceeff, #ffffff);
+      border-bottom-left-radius: 80px;
+      border-bottom-right-radius: 80px;
+    }
+
+    .hero h2 {
+      font-size: 38px;
+      margin-bottom: 20px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 750px;
+      margin: 0 auto 30px;
+    }
+
+    .cta button {
+      padding: 14px 30px;
+      font-size: 18px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .cta button:hover {
+      background: #1a5ecb;
+    }
+
     .stats {
       display: flex;
       justify-content: center;
       gap: 40px;
-      padding: 30px 20px;
+      padding: 60px 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 35px 40px;
+      border-radius: 25px;
       text-align: center;
+      width: 260px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.07);
+      transition: transform 0.2s;
     }
-    .stats div {
-      background-color: white;
-      padding: 25px 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+
+    .stat-card:hover {
+      transform: translateY(-5px);
     }
-    .stats div h3 {
-      margin-top: 10px;
-      font-size: 24px;
-      color: #1890ff;
+
+    .stat-card h3 {
+      font-size: 34px;
+      color: var(--primary-color);
+      margin-top: 15px;
     }
-    .stats div p {
-      margin: 5px 0 0;
-      font-size: 14px;
-      color: #555;
+
+    .stat-card p {
+      margin-top: 8px;
+      font-size: 15px;
+      color: var(--text-muted);
     }
-    .process-img {
+
+    .illustration {
       text-align: center;
-      margin: 30px auto;
+      margin: 50px auto;
     }
-    .process-img img {
+
+    .illustration img {
       width: 90%;
-      max-width: 900px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      max-width: 880px;
+      border-radius: 18px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
+
     footer {
-      margin-top: 40px;
       text-align: center;
-      font-size: 13px;
-      color: #eee;
-      padding-bottom: 20px;
+      font-size: 14px;
+      color: #999;
+      padding: 40px 10px 30px;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>GCInsights V2.0</h1>
+    <h1>GCInsights</h1>
     <nav>
       <a href="/login">Login</a>
       <a href="/signup">Sign Up</a>
     </nav>
   </header>
 
-  <div class="hero">
+  <section class="hero">
     <h2>Neuronal Growth Cone Multi-Omics Insight (GC-Insights)</h2>
-    <p>A web-based tool to navigate proteomics and lipidomics data. GC-Insights offers tools that enable the analysis and output of high resolution mass spectrometric data of growth cone proteins and lipids generated after extensive fractionation. Please click for tutorial and overview below.</p>
-  </div>
+    <p>A web-based tool to navigate proteomics and lipidomics data. GC-Insights offers tools that enable the analysis and output of high resolution mass spectrometric data of growth cone proteins and lipids generated after extensive fractionation.</p>
+    <div class="cta">
+      <button onclick="window.location.href='/login'">Get Started</button>
+    </div>
+  </section>
 
-  <div class="stats">
-    <div>
-      <img src="{{ url_for('static', filename='images/measures-icon.png') }}" width="50" alt="Measurements">
+  <section class="stats">
+    <div class="stat-card">
+      <img src="{{ url_for('static', filename='images/measures-icon.png') }}" width="60" alt="Measurements">
       <h3>83,196</h3>
       <p>Measurements</p>
     </div>
-    <div>
-      <img src="{{ url_for('static', filename='images/features-icon.png') }}" width="50" alt="Features">
+    <div class="stat-card">
+      <img src="{{ url_for('static', filename='images/features-icon.png') }}" width="60" alt="Features">
       <h3>2,771</h3>
       <p>Features</p>
     </div>
-    <div>
-      <img src="{{ url_for('static', filename='images/stages-icon.png') }}" width="50" alt="Stages">
+    <div class="stat-card">
+      <img src="{{ url_for('static', filename='images/stages-icon.png') }}" width="70" alt="Stages">
       <h3>5</h3>
       <p>Developmental Stages</p>
     </div>
-  </div>
+  </section>
 
-  <div class="process-img">
-    <img src="{{ url_for('static', filename='images/process-diagram.png') }}" alt="Data Processing Flow">
+  <div class="illustration">
+    <img src="{{ url_for('static', filename='images/process-diagram.png') }}" alt="Data Processing Diagram" />
   </div>
 
   <footer>
-    &copy; 2025 GCInsights – Powered by UMBC Capstone Project
+    &copy; 2025 GCInsights – A UMBC Capstone Project
   </footer>
 </body>
 </html>
