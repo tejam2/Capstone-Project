@@ -46,7 +46,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'GCinsights.reset@gmail.com'
-app.config['MAIL_PASSWORD'] = 'buyu wiux dbwu wcrb'
+app.config['MAIL_PASSWORD'] = 'MAIL_PASSWORD'
 app.config['MAIL_DEFAULT_SENDER'] = ('GCInsights Support', 'gcinsights.reset@gmail.com')
 
 # Database
@@ -55,9 +55,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Cloudinary Config
 cloudinary.config(
-    cloud_name="dwngugeu6",
-    api_key="294122356834448",
-    api_secret="nDl3udJNOhd26HVrtnxNY62RhT0",
+    cloud_name="cloud_name",
+    api_key="api_key",
+    api_secret="api_secret",
     secure=True
 )
 
@@ -734,7 +734,7 @@ from email.mime.text import MIMEText
 
 def send_email(subject, recipients, body):
     sender = "gcinsights.reset@gmail.com"
-    password = "buyu wiux dbwu wcrb"  # Use Gmail App Password
+    password = "password"  # Use Gmail App Password
 
     msg = MIMEText(body)
     msg["Subject"] = subject
